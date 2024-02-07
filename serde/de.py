@@ -67,6 +67,7 @@ from .compat import (
     iter_unions,
     type_args,
     typename,
+    simple_dict_representation,
 )
 from .core import (
     GLOBAL_CLASS_DESERIALIZER,
@@ -270,6 +271,7 @@ def deserialize(
         g["_exists_by_aliases"] = _exists_by_aliases
         g["_get_by_aliases"] = _get_by_aliases
         g["class_deserializers"] = class_deserializers
+        g["simple_dict_representation"] = simple_dict_representation
         if deserializer:
             g["serde_legacy_custom_class_deserializer"] = functools.partial(
                 serde_legacy_custom_class_deserializer, custom=deserializer
@@ -1085,9 +1087,16 @@ def {{func}}(cls=cls, maybe_generic=None, maybe_generic_type_vars=None, data=Non
 
   maybe_generic_type_vars = maybe_generic_type_vars or {{cls_type_vars}}
 
-  {% for f in fields %}
-  __{{f.name}} = {{f|arg(loop.index-1)|rvalue}}
-  {% endfor %}
+  try:
+    {% for f in fields %}
+    __{{f.name}} = {{f|arg(loop.index-1)|rvalue}}
+    {% endfor %}
+    pass # In case fields are empty
+  except KeyError as e:
+    raise SerdeError(
+      f"While deserializing {typename(cls)}, " +
+      f"did not find key {str(e)} in {simple_dict_representation(data)}"
+    )
 
   try:
     return cls(
@@ -1137,10 +1146,16 @@ def {{func}}(cls=cls, maybe_generic=None, maybe_generic_type_vars=None, data=Non
     reuse_instances = {{serde_scope.reuse_instances_default}}
 
   maybe_generic_type_vars = maybe_generic_type_vars or {{cls_type_vars}}
-
-  {% for f in fields %}
-  __{{f.name}} = {{f|arg(loop.index-1)|rvalue}}
-  {% endfor %}
+  try:
+    {% for f in fields %}
+    __{{f.name}} = {{f|arg(loop.index-1)|rvalue}}
+    {% endfor %}
+    pass # In case fields are empty
+  except KeyError as e:
+    raise SerdeError(
+      f"While deserializing {typename(cls)}, " +
+      f"did not find key {str(e)} in {simple_dict_representation(data)}"
+    )
 
   try:
     rv = cls(

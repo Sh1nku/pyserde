@@ -150,6 +150,18 @@ class SerdeSkip(Exception):
     """
 
 
+def simple_dict_representation(d: Dict[str, Any]) -> str:
+    def match_type(v: Any) -> str:
+        if isinstance(v, typing.Mapping):
+            return "..."
+        elif isinstance(v, typing.Iterable):
+            return "..."
+        else:
+            return repr(v)
+
+    return repr({k: match_type(v) for k, v in d.items()})
+
+
 def get_origin(typ: Any) -> Optional[Any]:
     """
     Provide `get_origin` that works in all python versions.
