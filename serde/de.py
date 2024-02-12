@@ -1087,16 +1087,21 @@ def {{func}}(cls=cls, maybe_generic=None, maybe_generic_type_vars=None, data=Non
 
   maybe_generic_type_vars = maybe_generic_type_vars or {{cls_type_vars}}
 
+  {% for f in fields %}
   try:
-    {% for f in fields %}
     __{{f.name}} = {{f|arg(loop.index-1)|rvalue}}
-    {% endfor %}
-    pass # In case fields are empty
-  except KeyError as e:
+  except Exception as e:
+    failed_executed = '''__{{f.name}} = {{f|arg(loop.index-1)|rvalue}}'''
     raise SerdeError(
-      f"While deserializing {typename(cls)}, " +
-      f"did not find key {str(e)} in {simple_dict_representation(data)}"
+      f"While deserializing {typename(cls)}\\n" +
+      f"failed to run for field '{{f.name}}':\\n" +
+      f" {failed_executed}\\n" +
+      f"on data:\\n" +
+      f" {simple_dict_representation(data)}\\n"
+      f"due to:\\n" +
+      f"{type(e).__name__}: {e}"
     )
+  {% endfor %}
 
   try:
     return cls(
@@ -1146,16 +1151,22 @@ def {{func}}(cls=cls, maybe_generic=None, maybe_generic_type_vars=None, data=Non
     reuse_instances = {{serde_scope.reuse_instances_default}}
 
   maybe_generic_type_vars = maybe_generic_type_vars or {{cls_type_vars}}
+
+  {% for f in fields %}
   try:
-    {% for f in fields %}
     __{{f.name}} = {{f|arg(loop.index-1)|rvalue}}
-    {% endfor %}
-    pass # In case fields are empty
-  except KeyError as e:
+  except Exception as e:
+    failed_executed = '''__{{f.name}} = {{f|arg(loop.index-1)|rvalue}}'''
     raise SerdeError(
-      f"While deserializing {typename(cls)}, " +
-      f"did not find key {str(e)} in {simple_dict_representation(data)}"
+      f"While deserializing {typename(cls)}\\n" +
+      f"failed to run for field '{{f.name}}':\\n" +
+      f" {failed_executed}\\n" +
+      f"on data:\\n" +
+      f" {simple_dict_representation(data)}\\n"
+      f"due to:\\n" +
+      f"{type(e).__name__}: {e}"
     )
+  {% endfor %}
 
   try:
     rv = cls(

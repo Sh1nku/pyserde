@@ -153,9 +153,9 @@ class SerdeSkip(Exception):
 def simple_dict_representation(d: Dict[str, Any]) -> str:
     def match_type(v: Any) -> str:
         if isinstance(v, typing.Mapping):
-            return "..."
+            return "{...}"
         elif isinstance(v, typing.Iterable):
-            return "..."
+            return "[...]"
         else:
             return repr(v)
 
